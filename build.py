@@ -32,7 +32,7 @@ CSS = """
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.75 "Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
 .wrap{max-width:760px;margin:0 auto;padding:24px 16px 80px}
-nav.top{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:28px}
+nav.top{display:flex;gap:14px;flex-wrap:nowrap;white-space:nowrap;align-items:baseline;font-size:14px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:28px}
 nav.top a{color:var(--muted);text-decoration:none}nav.top a:hover,nav.top a.on{color:var(--accent)}
 nav.top .brand{color:var(--fg);font-weight:700;margin-right:auto}
 h1{font-size:28px;line-height:1.35;margin:0 0 6px}
@@ -51,10 +51,12 @@ tr{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:12px
 td{border:0;padding:2px 0;min-width:0!important;white-space:normal!important}
 td:nth-child(2){color:var(--muted);font-size:14px;margin-bottom:6px}}
 .daylist{list-style:none;padding:0}
-.daylist li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:12px 0}
+.daylist>li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:12px 0}
 .daylist .d{font-weight:700;text-decoration:none;font-size:18px}
 .daylist .h{margin:4px 0 8px;color:var(--fg)}
 .daylist ol{margin:0;padding-left:20px;color:var(--muted);font-size:15px}
+.daylist ol a{color:var(--muted);text-decoration:none}.daylist ol a:hover{color:var(--accent);text-decoration:underline}
+.exlink{display:inline-block;font-size:15px;font-weight:600;margin-bottom:10px;text-decoration:none}
 .pager{display:flex;justify-content:space-between;gap:12px;margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-size:15px}
 .entry{padding:12px 0;border-bottom:1px solid var(--line)}
 .entry b{font-size:17px}.entry .when{color:var(--muted);font-size:13px;margin-left:8px}
@@ -65,8 +67,7 @@ footer{margin-top:60px;color:var(--muted);font-size:13px}
 
 
 def page(title, body, active=""):
-    links = [("index.html", "날짜별"), ("storylines.html", "이야기 줄기"),
-             ("glossary.html", "용어집"), ("expressions.html", "영어 표현")]
+    links = [("index.html", "날짜별"), ("storylines.html", "이야기 줄기"), ("glossary.html", "용어집")]
     nav = "".join(
         f'<a href="{{root}}{h}"{" class=on" if h == active else ""}>{t}</a>' for h, t in links)
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
@@ -74,7 +75,7 @@ def page(title, body, active=""):
 <title>{html.escape(title)}</title><style>{CSS}</style></head><body><div class="wrap">
 <nav class="top"><a class="brand" href="{{root}}index.html">🗽 {SITE_TITLE}</a>{nav}</nav>
 {body}
-<footer>📄 뉴스 자료 기반 · 🧭 Claude 배경 설명(제도·개념) · 원본 카드 = <a href="https://prism-news.org/en">PRISM</a></footer>
+<footer><a class="exlink" href="{{root}}expressions.html">🔤 영어 표현 모음 →</a><br>📄 뉴스 자료 기반 · 🧭 Claude 배경 설명(제도·개념) · 원본 카드 = <a href="https://prism-news.org/en">PRISM</a></footer>
 </div></body></html>"""
 
 
@@ -147,7 +148,7 @@ def main():
 
     items = []
     for d in reversed(days):
-        cards = "".join(f"<li>{html.escape(t)}</li>" for _, t in d["cards"])
+        cards = "".join(f'<li><a href="days/{d["date"]}.html#c{n}">{html.escape(t)}</a></li>' for n, t in d["cards"])
         items.append(f'<li><a class="d" href="days/{d["date"]}.html">{label(d)}</a>'
                      f'<div class="h">{html.escape(d["headline"])}</div><ol>{cards}</ol></li>')
     intro = (f"<h1>{SITE_TITLE}</h1><p class=sub>매일 미국에서 크게 다뤄진 뉴스를 한국어로 읽고, "
