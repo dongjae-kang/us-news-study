@@ -115,7 +115,8 @@ function setEntry(id, base, patch){
   var e=store[id]||JSON.parse(JSON.stringify(base)), k;
   for(k in patch){ e[k]=patch[k]; }
   e.at=new Date().toISOString();
-  if(!e.verdict && !e.note){ delete store[id]; } else { store[id]=e; }
+  // A mark that is taken back stays as a "removed" entry, so the next export says it was removed.
+  if(!e.verdict && !e.note){ if(store[id]){ e.removed=true; store[id]=e; } } else { delete e.removed; store[id]=e; }
   persist();
 }
 function make(tag, cls, text){ var n=document.createElement(tag); if(cls){ n.className=cls; } if(text){ n.textContent=text; } return n; }
@@ -145,10 +146,11 @@ function cardStrip(date, c){ return strip(date+'|card|'+c.xid, {date:date, kind:
 function dayStrip(date){ return strip(date+'|day|set', {date:date, kind:'day'}, '이날 묶음'); }
 
 function entries(){ return Object.keys(store).sort().map(function(id){ return store[id]; }); }
+function live(){ return entries().filter(function(e){ return !e.removed; }).length; }
 function asText(){
-  var es=entries(), lines=['[US 메모 v1] '+new Date().toISOString()+' · '+es.length+'건'];
+  var es=entries(), lines=['[US 메모 v1] '+new Date().toISOString()+' · '+live()+'건'];
   function flat(t){ return String(t||'').replace(/\s*\|\s*/g,' / '); }
-  es.forEach(function(e){ lines.push([e.date, e.kind, e.n||'', e.verdict||'', flat(e.xid||e.title), flat(e.note)].join(' | ')); });
+  es.forEach(function(e){ lines.push([e.date, e.kind, e.n||'', e.removed?'removed':(e.verdict||''), flat(e.xid||e.title), flat(e.note)].join(' | ')); });
   return lines.join('\n');
 }
 function say(text){ var m=document.querySelector('.rvbar .msg'); if(m){ m.textContent=text; } }
@@ -174,7 +176,7 @@ function refresh(){
     var inp=box.querySelector('.rv-n'); if(inp && document.activeElement!==inp){ inp.value=e.note||''; }
   });
   Array.prototype.forEach.call(document.querySelectorAll('.rv-x'), function(b){ b.setAttribute('aria-pressed', (store[b.getAttribute('data-id')]||{}).verdict==='add'?'true':'false'); });
-  var n=Object.keys(store).length;
+  var n=live();
   Array.prototype.forEach.call(document.querySelectorAll('.rvbar .n'), function(x){
     x.textContent=(n?'메모 '+n+'건':'아직 메모가 없습니다')+(canStore?'':' · 이 브라우저는 저장을 막아 두어, 창을 닫으면 사라집니다');
   });
